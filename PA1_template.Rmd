@@ -1,13 +1,28 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
+title: REPRODUCIBLE RESEARCH - PEER - GRADED ASSIGNMENT 1
 output: 
   html_document:
-    keep_md: true
+          toc: true
+          number_sections: true
 ---
+<link rel="stylesheet" href="styles.css">
+<hr/>
 
+# Introduction
+This report presents the  
+
+# Methods
 
 ## Loading and preprocessing the data
+The following R code was used to import the FitBit data.
 
+```{r data import}
+unzip("activity.zip")
+fitData<-read.csv("activity.csv",stringsAsFactors=FALSE)
+
+dim(fitData)
+head(fitData)
+```
 
 
 ## What is mean total number of steps taken per day?
@@ -20,6 +35,9 @@ output:
 
 ## Imputing missing values
 
-
+# Results
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+
+# References

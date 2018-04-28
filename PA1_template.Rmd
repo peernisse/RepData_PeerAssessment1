@@ -4,17 +4,27 @@ author: Peter EerNisse https://github.com/peernisse/RepData_PeerAssessment1
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: 
   html_document:
-          code_folding: show
-          toc: true
-          toc_float: 
-                collapsed: true
-                smooth_scroll: true
+          #code_folding: show
+          #toc: true
+          #toc_float: 
+                #collapsed: true
+               # smooth_scroll: true
           number_sections: true
-          css: styles.css
+          #css: styles.css
+          keep_md: true
+          
+          
           
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE }
+library(tidyverse)
+library(lubridate)
+library(knitr)
+options(scipen = 6)
+library(knitr)
+opts_chunk$set(fig.path = "./figure/")
+
 
 ```
 
@@ -42,9 +52,6 @@ The R programming language was used to import, process, evaluate the data and pr
 The following R code unzips the file and imports the personal activity monitoring data.
 
 ```{r data import,message=FALSE}
-library(tidyverse)
-library(lubridate)
-library(knitr)
 unzip("activity.zip")
 fitData<-read.csv("activity.csv",stringsAsFactors=FALSE)
 ```
@@ -56,6 +63,7 @@ newdates<-strptime(fitData$date,format="%Y-%m-%d")
 fitData$date<-as.POSIXct(newdates)
 fitData$Year<-year(fitData$date)
 fitData$Month<-month(fitData$date,abbr=FALSE,label=TRUE)
+
 fitData$Day<-wday(fitData$date,abbr=FALSE,label=TRUE)
 fitData<-as_tibble(fitData)
 head(fitData)
@@ -72,30 +80,39 @@ summary(fitData$steps)
 2. If you do not understand the difference between a histogram and a barplot, research the difference between them. Make a histogram of the total number of steps taken each day
 3. Calculate and report the mean and median of the total number of steps taken per day
 
-**Figure 1.  **Histogram of total number of steps taken each day. NA values have been removed.
-```{r histogram}
+**Figure 1.  **Histogram of total number of daily steps over 53 days. NA values have been removed.
+```{r histogram, dpi=72}
 
 histData<-filter(fitData,!is.na(steps))
-h<-ggplot(histData,aes(steps))+
-        geom_histogram(bins = 30,fill="#ff794d",color="#ff794d")
+histData<-histData %>% group_by(date) %>% 
+        summarize(totalDailySteps = sum(steps))
+h<-ggplot(histData,aes(totalDailySteps))+
+        geom_histogram(bins = 30,fill="#ff794d",color="#ff794d")+
+        labs(y="Days", x = "Total Steps for the Day")
 h
 
-
-
 ```
 
-The majority of the data are grouped near or at zero (no walking).
 
-**Table 1.**Summary statistics for steps taken per day. NA values have been removed.
+
+**Table 1.**Summary statistics for total steps taken per day over 53 days. NA values have been removed.
 ```{r}
-stepSum<-histData %>% 
-        group_by(date) %>% 
-        summarize(N=length(steps),Mean=round(mean(steps),1),Median=median(steps))
-kable(stepSum,format="markdown",align = "c",col.names = c("Date","Total Observations","Mean","Median"))
+
+stepSum<-filter(fitData,!is.na(steps))
+stepSum<-stepSum %>% group_by(date) %>% 
+        summarize(totalDailySteps = sum(steps))
+stepSum<-mosaic::favstats(stepSum$totalDailySteps)
+
+
+
+
+kable(stepSum,format="markdown",align = "c",col.names = c('Minimum',
+                '1st Quartile','Median','3rd Quartile','Maximum','Mean',
+                 'Std. Deviation','Valid Measurements','NA Values'))
 
 ```
 
-The results in **Table 1** show all days having a median value for steps equal to zero. This agrees with the histogram in **Figure 2** that the majority of the data are grouped at or near zero.
+The results in **Table 1** show a mean value for total daily steps of 10,766 and a median value of 10,765. This result agrees with the histogram in **Figure 2**. The closeness of the mean and median values indicates a very normally distributed dataset.
 
 ## Average Daily Activity Pattern
 **Question.  **What is the average daily activity pattern?
@@ -104,10 +121,10 @@ The results in **Table 1** show all days having a median value for steps equal t
 
 1. Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis).
 
-2.Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+2. Which 5-minute interval, on average, across all the days in the dataset, contains the maximum number of steps?
 
 **Figure 2.  **Time series plot of average steps per daily interval, averaged over two months.
-```{r time series}
+```{r time series, dpi=72}
 tsData<-filter(fitData,!is.na(steps)) %>% 
         group_by(interval) %>% 
         summarize(N = length(steps),aveSteps=mean(steps))
@@ -115,7 +132,7 @@ tsData<-filter(fitData,!is.na(steps)) %>%
 t<-ggplot(tsData,aes(x=interval,y=aveSteps))+
         geom_point(color="steelblue",size=3)+
         geom_line(color="steelblue",linetype="dashed",size=.75)+
-        labs(y="Average Number of Steps per Interval\n(October-November 2012)",
+        labs(y="Average Number of Steps per Interval over 53 Days\n(October-November 2012)",
              x="Interval (time of day)")
 t
 
@@ -128,7 +145,8 @@ The daily time interval containing the maximum number of steps on average is des
 
 **Table 2.  **The daily interval containing the maximum average number of steps. 
 ```{r max steps}
-kable(filter(tsData,aveSteps==max(aveSteps)),format="markdown")
+kable(filter(tsData,aveSteps==max(aveSteps)),format="markdown", align = 'c',
+      col.names = c('Interval','Number of Days Measured','Average Steps'))
 
 
 
@@ -138,10 +156,154 @@ The interval containing the maximum average number of daily steps is the 835 int
 
 
 ## Imputing Missing Values
-**Objective.  **Impute some meaningful values for the missing values (i.e., NAs) in the dataset.
+**Objective.  **Impute some meaningful values for the missing values (i.e., NAs) in the dataset to answer the questions.
+
+**Instructions.  **
+
+1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs).
+
+**Table 3.  **Summary statistics for valid step measurements, and number of NA values.
+```{r summarize na values}
+sum<-mosaic::favstats(fitData$steps)
+kable(sum,format="markdown",align = 'c', col.names = c('Minimum',
+                '1st Quartile','Median','3rd Quartile','Maximum','Mean',
+                 'Std. Deviation','Valid Measurements','NA Values'))
+
+
+
+```
+
+The number of NA values in the dataset is 2,304 out of `r 15264+2304` or `r round(2304/(15264+2304)*100,1)` percent of the data.
+
+2. Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
+
+The selected strategy is to calculate the average number of steps taken in each interval by day of the week. Then, these values will be substituted into the dataset for the NA values by day of the week and interval using the 'join' function in dplyr.
+
+```{r make impute data}
+#Create the data to use for imputation
+impData<-filter(fitData,!is.na(steps))
+impData<-impData %>% group_by(Day,interval) %>% 
+        summarize(numObs = length(steps),dayIntAve = mean(steps))
+head(impData,10)
+
+```
+
+This dataframe holds the values that will be used to substitute the NA values in the full dataset.
+
+3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
+
+The steps are as follows:
+
+```{r impute data}
+#Split the dataset to isolate the NAs
+toFill<-filter(fitData,is.na(steps))
+aok<-filter(fitData,!is.na(steps))
+
+#Merge in the values for imputation by weekday and interval
+toFill<-left_join(toFill,impData, by = c('Day' = 'Day','interval' = 'interval'))
+
+#Keep track of original vs imputed values
+aok$REMARK<-'Original data'
+toFill$REMARK<-'Imputed data'
+
+#Fix up the imputed dataframe for appending back to the rest of the data
+toFill$steps<-toFill$dayIntAve
+toFill<-select(toFill,c("steps","date","interval","Year","Month","Day","REMARK"))
+
+#Add back to the rest of the data
+fitData2<-bind_rows(aok,toFill)
+fitData2<-arrange(fitData2,date,interval)
+
+head(fitData2,15)
+
+```
+
+Looks like the 2,304 NA values have been substituted with the average value for each weekday and interval.
+
+4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+
+**Figure 3.  **Histogram of total number of daily steps over 61 days. NA values have been imputed with the corresponding average calculated value for each weekday and interval.
+```{r histogram2, dpi=72}
+
+histData2<-fitData2 %>% group_by(date) %>% 
+        summarize(totalDailySteps = sum(steps))
+h2<-ggplot(histData2,aes(totalDailySteps))+
+        geom_histogram(bins = 30,fill="#ff794d",color="#ff794d")+
+        labs(y="Days", x = "Total Steps for the Day")
+h2
+
+```
+
+The histogram is not largely different in configuration than the histogram shown in **Figure 1**. The number of days with total steps in the 10,000 to 11,000 range has increased slightly. 
+**Table 4.  **Summary statistics for total steps taken per day over 61 days with NA values imputed, vs. a 53 day period where the NA values were removed. NA values were imputed with the corresponding average calculated value for each weekday and interval.
+
+```{r summary imputed data}
+#Removing the NAs
+stepSum<-filter(fitData,!is.na(steps))
+stepSum<-stepSum %>% group_by(date) %>% 
+        summarize(totalDailySteps = sum(steps))
+stepSum<-mosaic::favstats(stepSum$totalDailySteps)
+stepSum$Method<-'NAs Removed'
+row.names(stepSum)<-NULL
+
+#With inputation
+stepSum2<-fitData2 %>% group_by(date) %>% 
+        summarize(totalDailySteps = sum(steps))
+stepSum2<-mosaic::favstats(stepSum2$totalDailySteps)
+stepSum2$Method<-'NAs Imputed'
+row.names(stepSum2)<-NULL
+
+stepSum3<-rbind(stepSum,stepSum2)
+
+
+kable(stepSum3,format="markdown",align = "c",col.names = c('Minimum',
+                '1st Quartile','Median','3rd Quartile','Maximum','Mean',
+                 'Std. Deviation','Valid Measurements','NA Values','Method'))
+
+```
+
+The results in **Table 4** show a mean value for total daily steps of 10,821 and a median value of 11,015. This result agrees with the histogram in **Figure 3**. The closeness of the mean and median values still indicates a very normally distributed dataset after substituting NA values.
+
+The effect of using imputed values versus removing the NA values is not a major one in this case.
 
 ## Compare Weekday and Weekend Activity
 **Question.  **Are there differences in activity patterns between weekdays and weekends?
+
+For this part the weekdays() function may be of some help here. Use the dataset with the filled-in missing values for this part.
+
+**Instructions.  **
+
+1. Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
+
+```{r weekday inspection}
+fitData2$DayType<-ifelse(fitData$Day %in% c('Saturday','Sunday'),"Weekend","Weekday") %>% 
+        as.factor()
+chk<-fitData2[,c('Day','DayType')]
+unique(chk)
+```
+
+Days have been assigned 'weekday' or 'weekend'.
+
+2. Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). See the README file in the GitHub repository to see an example of what this plot should look like using simulated data.
+
+**Figure 4.  **Time series plot of average steps per daily interval, averaged over two months, by weekend days and weekdays.
+```{r time series 2, dpi=72}
+tsData2<-fitData2 %>%
+        group_by(DayType,interval) %>% 
+        summarize(N = length(steps),aveSteps=mean(steps))
+
+t<-ggplot(tsData2,aes(x=interval,y=aveSteps))+
+        geom_point(color="steelblue",size=3)+
+        geom_line(color="steelblue",linetype="dashed",size=.75)+
+        facet_grid(DayType~.,switch = 'both')+
+        labs(y="Average Number of Steps",
+             x="Interval (time of day)")
+t
+
+
+```
+
+The high period of activity around 8-9 am seems to be present both on weekends and weekdays, with the higher average number of steps at this time of day ocuuring on the weekdays.
 
 <hr>
 

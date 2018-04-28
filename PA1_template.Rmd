@@ -1,43 +1,173 @@
 ---
-title: REPRODUCIBLE RESEARCH - PEER - GRADED ASSIGNMENT 1
+title: REPRODUCIBLE RESEARCH PEER - GRADED ASSIGNMENT 1
+author: Peter EerNisse https://github.com/peernisse/RepData_PeerAssessment1
+date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: 
   html_document:
+          code_folding: show
           toc: true
+          toc_float: 
+                collapsed: true
+                smooth_scroll: true
           number_sections: true
+          css: styles.css
+          
 ---
-<link rel="stylesheet" href="styles.css">
-<hr/>
 
-# Introduction
-This report presents the  
+```{r setup, include=FALSE}
 
-# Methods
-
-## Loading and preprocessing the data
-The following R code was used to import the FitBit data.
-
-```{r data import}
-unzip("activity.zip")
-fitData<-read.csv("activity.csv",stringsAsFactors=FALSE)
-
-dim(fitData)
-head(fitData)
 ```
 
 
-## What is mean total number of steps taken per day?
+<hr>
+
+# Introduction
+This report presents the analysis of data from personal activity monitoring devices such as the [Fitbit][1], [Nike Fuelband][2], or [Jawbone Up][3]. The data provided will be used to evaluate temporal patterns of recorded daily activity (i.e., walking/steps).
+
+The study objectives are:
+
+1. Import and clean the data (if necessary)
+2. Examine mean total number of steps per day
+3. Examine the average daily activity pattern
+4. Demonstrate imputing missing values and the effect of this on the results
+5. Examine differences in activity patterns between weekdays and weekends
+
+<hr>
+
+# Methods and Results
+The R programming language was used to import, process, evaluate the data and present the results with regard to the stated objectives. The methods used in, and results of these analyses are described and presented in the following sections.
+
+
+## Loading and Preprocessing the Data
+The following R code unzips the file and imports the personal activity monitoring data.
+
+```{r data import,message=FALSE}
+library(tidyverse)
+library(lubridate)
+library(knitr)
+unzip("activity.zip")
+fitData<-read.csv("activity.csv",stringsAsFactors=FALSE)
+```
+
+Using package lubridate to convert date strings to POSIXct and create fields for year, month and day.
+
+```{r setting year month and day}
+newdates<-strptime(fitData$date,format="%Y-%m-%d")
+fitData$date<-as.POSIXct(newdates)
+fitData$Year<-year(fitData$date)
+fitData$Month<-month(fitData$date,abbr=FALSE,label=TRUE)
+fitData$Day<-wday(fitData$date,abbr=FALSE,label=TRUE)
+fitData<-as_tibble(fitData)
+head(fitData)
+summary(fitData$steps)
+```
+
+
+## Mean Total Steps per Day
+**Question.  **What is the mean of total number of steps taken per day?
+
+**Instructions.  **For this part of the assignment, you can ignore the missing values in the dataset.
+
+1. Calculate the total number of steps taken per day
+2. If you do not understand the difference between a histogram and a barplot, research the difference between them. Make a histogram of the total number of steps taken each day
+3. Calculate and report the mean and median of the total number of steps taken per day
+
+**Figure 1.  **Histogram of total number of steps taken each day. NA values have been removed.
+```{r histogram}
+
+histData<-filter(fitData,!is.na(steps))
+h<-ggplot(histData,aes(steps))+
+        geom_histogram(bins = 30,fill="#ff794d",color="#ff794d")
+h
 
 
 
-## What is the average daily activity pattern?
+```
+
+The majority of the data are grouped near or at zero (no walking).
+
+**Table 1.**Summary statistics for steps taken per day. NA values have been removed.
+```{r}
+stepSum<-histData %>% 
+        group_by(date) %>% 
+        summarize(N=length(steps),Mean=round(mean(steps),1),Median=median(steps))
+kable(stepSum,format="markdown",align = "c",col.names = c("Date","Total Observations","Mean","Median"))
+
+```
+
+The results in **Table 1** show all days having a median value for steps equal to zero. This agrees with the histogram in **Figure 2** that the majority of the data are grouped at or near zero.
+
+## Average Daily Activity Pattern
+**Question.  **What is the average daily activity pattern?
+
+**Instructions.  **
+
+1. Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis).
+
+2.Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+
+**Figure 2.  **Time series plot of average steps per daily interval, averaged over two months.
+```{r time series}
+tsData<-filter(fitData,!is.na(steps)) %>% 
+        group_by(interval) %>% 
+        summarize(N = length(steps),aveSteps=mean(steps))
+
+t<-ggplot(tsData,aes(x=interval,y=aveSteps))+
+        geom_point(color="steelblue",size=3)+
+        geom_line(color="steelblue",linetype="dashed",size=.75)+
+        labs(y="Average Number of Steps per Interval\n(October-November 2012)",
+             x="Interval (time of day)")
+t
+
+
+```
+
+The most active time interval of the day within the two month period appears to be between minute intervals 750 and 1000. There are 1440 minutes in a day and the data set contains 2355 intervals per day meaning each interval is aproximately `r round(1440/2335*60,1)` seconds. These intervals of highest activity in **Figure 2** then represent approximately the `r round(750*37/3600,0)`th and `r round(1000*37/3600,0)`th hours of the day (8 am and 10 am).
+
+The daily time interval containing the maximum number of steps on average is described as folows:
+
+**Table 2.  **The daily interval containing the maximum average number of steps. 
+```{r max steps}
+kable(filter(tsData,aveSteps==max(aveSteps)),format="markdown")
 
 
 
-## Imputing missing values
+```
 
-# Results
+The interval containing the maximum average number of daily steps is the 835 interval, corresponding approximately to the `r round(850*37/3600,1)`th hour, or about 840 am. This pattern could represent a walking or cycling morning commute. However, it is not repeated at the end of the day, so it may be more likely that this represents a workout routine.
 
-## Are there differences in activity patterns between weekdays and weekends?
 
+## Imputing Missing Values
+**Objective.  **Impute some meaningful values for the missing values (i.e., NAs) in the dataset.
+
+## Compare Weekday and Weekend Activity
+**Question.  **Are there differences in activity patterns between weekdays and weekends?
+
+<hr>
 
 # References
+
+## Data Sources
+
+* Dataset: [Activity monitoring data](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip) [52K]
+
+The variables included in this dataset are:
+
+* **steps**: Number of steps taking in a 5-minute interval (missing
+    values are coded as `NA`)
+
+* **date**: The date on which the measurement was taken in YYYY-MM-DD
+    format
+
+* **interval**: Identifier for the 5-minute interval in which
+    measurement was taken
+
+## RMarkdown and CSS
+
+* https://rmarkdown.rstudio.com/html_document_format.html#code_folding
+
+* https://www.w3schools.com/html/html_css.asp
+
+[1]: http://www.fitbit.com
+[2]: http://www.nike.com/us/en_us/c/nikeplus-fuelband
+[3]: https://jawbone.com/up

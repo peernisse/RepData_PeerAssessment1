@@ -3,3 +3,6 @@
 .RData
 .Ruserdata
 *.csv
+*.html
+*./doc
+*./instructions_fig

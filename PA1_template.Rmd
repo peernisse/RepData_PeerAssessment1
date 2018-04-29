@@ -4,14 +4,14 @@ author: Peter EerNisse https://github.com/peernisse/RepData_PeerAssessment1
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: 
   html_document:
-          #code_folding: show
-          #toc: true
-          #toc_float: 
-                #collapsed: true
-               # smooth_scroll: true
+          code_folding: show
+          toc: true
+          toc_float: 
+                collapsed: true
+                smooth_scroll: true
           number_sections: true
 
-          #css: styles.css
+          css: styles.css
 
           keep_md: true
           
@@ -100,7 +100,7 @@ h
 
 
 **Table 1.**Summary statistics for total steps taken per day over 53 days. NA values have been removed.
-```{r}
+```{r summaryOfSteps}
 
 stepSum<-filter(fitData,!is.na(steps))
 stepSum<-stepSum %>% group_by(date) %>% 
@@ -128,7 +128,7 @@ The results in **Table 1** show a mean value for total daily steps of 10,766 and
 2. Which 5-minute interval, on average, across all the days in the dataset, contains the maximum number of steps?
 
 **Figure 2.  **Time series plot of average steps per daily interval, averaged over two months.
-```{r time series, dpi=72}
+```{r time_series, dpi=72}
 tsData<-filter(fitData,!is.na(steps)) %>% 
         group_by(interval) %>% 
         summarize(N = length(steps),aveSteps=mean(steps))
@@ -160,13 +160,13 @@ The interval containing the maximum average number of daily steps is the 835 int
 
 
 ## Imputing Missing Values
-**Objective.  **Impute some meaningful values for the missing values (i.e., NAs) in the dataset to answer the questions.
+**Objective.  ** Impute some meaningful values for the missing values (i.e., NAs) in the dataset to answer the questions.
 
 **Instructions.  **
 
 1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs).
 
-**Table 3.  **Summary statistics for valid step measurements, and number of NA values.
+**Table 3.  ** Summary statistics for valid step measurements, and number of NA values.
 ```{r summarize na values}
 sum<-mosaic::favstats(fitData$steps)
 kable(sum,format="markdown",align = 'c', col.names = c('Minimum',
@@ -241,7 +241,8 @@ h2
 ```
 
 The histogram is not largely different in configuration than the histogram shown in **Figure 1**. The number of days with total steps in the 10,000 to 11,000 range has increased slightly. 
-**Table 4.  **Summary statistics for total steps taken per day over 61 days with NA values imputed, vs. a 53 day period where the NA values were removed. NA values were imputed with the corresponding average calculated value for each weekday and interval.
+
+**Table 4.  ** Summary statistics for total steps taken per day over 61 days with NA values imputed, vs. a 53 day period where the NA values were removed. NA values were imputed with the corresponding average calculated value for each weekday and interval.
 
 ```{r summary imputed data}
 #Removing the NAs
@@ -252,7 +253,7 @@ stepSum<-mosaic::favstats(stepSum$totalDailySteps)
 stepSum$Method<-'NAs Removed'
 row.names(stepSum)<-NULL
 
-#With inputation
+#With imputation
 stepSum2<-fitData2 %>% group_by(date) %>% 
         summarize(totalDailySteps = sum(steps))
 stepSum2<-mosaic::favstats(stepSum2$totalDailySteps)
@@ -294,7 +295,7 @@ Days have been assigned 'weekday' or 'weekend'.
 
 **Figure 4.  **Time series plot of average steps per daily interval, averaged over two months, by weekend days and weekdays.
 
-```{r time series 2, dpi=72}
+```{r time_series2, dpi=72}
 
 tsData2<-fitData2 %>%
         group_by(DayType,interval) %>% 

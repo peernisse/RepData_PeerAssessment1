@@ -4,23 +4,15 @@ author: Peter EerNisse https://github.com/peernisse/RepData_PeerAssessment1
 date: "28 April, 2018"
 output: 
   html_document:
-<<<<<<< HEAD
           #code_folding: show
           #toc: true
           #toc_float: 
                 #collapsed: true
                # smooth_scroll: true
           number_sections: true
+
           #css: styles.css
-=======
-          code_folding: show
-          toc: true
-          toc_float: 
-                collapsed: true
-                smooth_scroll: true
-          number_sections: true
-          css: styles.css
->>>>>>> 121dd9ded072a0be53e5f737754c7ebe087e790d
+
           keep_md: true
           
           
@@ -104,6 +96,7 @@ summary(fitData$steps)
 3. Calculate and report the mean and median of the total number of steps taken per day
 
 **Figure 1.  **Histogram of total number of daily steps over 53 days. NA values have been removed.
+
 
 ```r
 histData<-filter(fitData,!is.na(steps))
@@ -300,6 +293,7 @@ Looks like the 2,304 NA values have been substituted with the average value for 
 
 **Figure 3.  **Histogram of total number of daily steps over 61 days. NA values have been imputed with the corresponding average calculated value for each weekday and interval.
 
+
 ```r
 histData2<-fitData2 %>% group_by(date) %>% 
         summarize(totalDailySteps = sum(steps))
@@ -385,6 +379,7 @@ Days have been assigned 'weekday' or 'weekend'.
 2. Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). See the README file in the GitHub repository to see an example of what this plot should look like using simulated data.
 
 **Figure 4.  **Time series plot of average steps per daily interval, averaged over two months, by weekend days and weekdays.
+
 
 ```r
 tsData2<-fitData2 %>%

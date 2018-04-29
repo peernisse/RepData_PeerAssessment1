@@ -4,6 +4,7 @@ author: Peter EerNisse https://github.com/peernisse/RepData_PeerAssessment1
 date: "28 April, 2018"
 output: 
   html_document:
+<<<<<<< HEAD
           #code_folding: show
           #toc: true
           #toc_float: 
@@ -11,6 +12,15 @@ output:
                # smooth_scroll: true
           number_sections: true
           #css: styles.css
+=======
+          code_folding: show
+          toc: true
+          toc_float: 
+                collapsed: true
+                smooth_scroll: true
+          number_sections: true
+          css: styles.css
+>>>>>>> 121dd9ded072a0be53e5f737754c7ebe087e790d
           keep_md: true
           
           

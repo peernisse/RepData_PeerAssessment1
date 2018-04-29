@@ -10,7 +10,9 @@ output:
                 #collapsed: true
                # smooth_scroll: true
           number_sections: true
+
           #css: styles.css
+
           keep_md: true
           
           
@@ -81,7 +83,9 @@ summary(fitData$steps)
 3. Calculate and report the mean and median of the total number of steps taken per day
 
 **Figure 1.  **Histogram of total number of daily steps over 53 days. NA values have been removed.
+
 ```{r histogram, dpi=72}
+
 
 histData<-filter(fitData,!is.na(steps))
 histData<-histData %>% group_by(date) %>% 
@@ -223,7 +227,9 @@ Looks like the 2,304 NA values have been substituted with the average value for 
 4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
 
 **Figure 3.  **Histogram of total number of daily steps over 61 days. NA values have been imputed with the corresponding average calculated value for each weekday and interval.
+
 ```{r histogram2, dpi=72}
+
 
 histData2<-fitData2 %>% group_by(date) %>% 
         summarize(totalDailySteps = sum(steps))
@@ -287,7 +293,9 @@ Days have been assigned 'weekday' or 'weekend'.
 2. Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). See the README file in the GitHub repository to see an example of what this plot should look like using simulated data.
 
 **Figure 4.  **Time series plot of average steps per daily interval, averaged over two months, by weekend days and weekdays.
+
 ```{r time series 2, dpi=72}
+
 tsData2<-fitData2 %>%
         group_by(DayType,interval) %>% 
         summarize(N = length(steps),aveSteps=mean(steps))
